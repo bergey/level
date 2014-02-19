@@ -1,15 +1,18 @@
 import Control.Applicative
 import Control.Lens
-import Graphics.Formats.STL.Printer
+import Graphics.Formats.STL.Binary
 import Graphics.Level.Polygonization
 import Linear
 import Linear.Affine
-import Text.PrettyPrint
+import System.Environment (getArgs)
+import qualified Data.ByteString as BS
+import Data.Serialize
 
-sphere = Implicit (\p -> qdA p origin - 1) (\_ -> V2 (-1) 1)
+sphere = Implicit (\p -> {-# SCC "sphereFun" #-} qdA p origin - 1) (\_ -> {-# SCC "sphereEnv" #-} V2 (-1) 1)
 
-box = Implicit (\p -> maximum [p^._x - 1, p^._y - 1, p^._z - 1, -1 - p^._x, -1 - p^._y, -1 - p^._z])
-               (\_ -> V2 (-1.1) 1.1) -- TODO only works for coordinate axes!
+box = Implicit (\p -> {-# SCC "boxFun" #-} maximum [p^._x - 1, p^._y - 1, p^._z - 1, -1 - p^._x, -1 - p^._y, -1 - p^._z])
+               (\v -> {-# SCC "boxEnv" #-} V2 (pure (-1.1) `dot` v) (pure 1.1 `dot` v))
+       -- TODO require by contract that v is a unit vector
   where
     manhattan (V3 x y z) = x+y+z
 
@@ -35,4 +38,9 @@ difference :: Implicit -> Implicit -> Implicit
 difference (Implicit f env1) (Implicit g _) = Implicit fg env1 where
   fg p = max (f p) (negate (g p))
 
-main = putStrLn . render . prettySTL . polygonize 0.01 $ difference box (scale 1.2 sphere)
+main = do
+    args <- getArgs
+    let
+        eps :: Double
+        eps = read . head $ args
+    BS.writeFile "wiffle.stl" . runPut . put . polygonize eps $ difference box $ scale 1.2 sphere
