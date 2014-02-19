@@ -32,12 +32,14 @@ data Implicit = Implicit (Pt -> Double) (Vec -> V2 Double)
 
 -- | A cube represented by two opposite corners
 data Cube = Cube Pt Pt
+          deriving (Show)
 
 mkCube :: V2 Vec -> Cube
 mkCube (V2 l u) = Cube (P l) (P u)
 
 -- | Any 4 points define a tetrahedron, provided they are not all coplanar.
 data Tetrahedron = Tetra Pt Pt Pt Pt
+                 deriving (Show)
 
 -- | @polygonize e s@ generates an explicit triangle mesh on the
 -- surface of s, using a grid of axis-aligned cubes of size e.
@@ -87,7 +89,7 @@ findSurface i@(Implicit f _) (Tetra a b c d) = case map ((>0) . f) [a,b,c,d] of
     [False,False,True ,False] -> [ tri (edge a c) (edge c d) (edge b c)]
     [False,False,True ,True ] -> [ tri (edge a d) (edge b d) (edge b c)
                                  , tri (edge b c) (edge a c) (edge a d)]
-    [False,True ,False,False] -> [ tri (edge a b) (edge a d) (edge a c)]
+    [False,True ,False,False] -> [ tri (edge a b) (edge b c) (edge b d)]
     [False,True ,False,True ] -> [ tri (edge a d) (edge a b) (edge b c)
                                  , tri (edge b c) (edge c d) (edge a d)]
     [False,True ,True ,False] -> [ tri (edge a b) (edge a c) (edge c d)
