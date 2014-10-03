@@ -13,3 +13,7 @@ TAGS
 .diagrams-cache
 /cabal.sandbox.config
 /.cabal-sandbox/
+/examples/intersection
+/examples/sphere
+/examples/wiffle
+*.stl
