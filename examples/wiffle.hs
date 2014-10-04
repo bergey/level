@@ -1,11 +1,12 @@
 import Control.Applicative
 import Control.Lens
-import Graphics.Formats.STL.Binary
+import Graphics.Formats.STL
 import Graphics.Level.Polygonization
 import Linear
 import Linear.Affine
 import System.Environment (getArgs)
-import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BS
+import           Data.ByteString.Lazy.Builder (toLazyByteString)
 import Data.Serialize
 
 sphere = Implicit (\p -> {-# SCC "sphereFun" #-} qdA p origin - 1) (\_ -> {-# SCC "sphereEnv" #-} V2 (-1) 1)
@@ -43,4 +44,4 @@ main = do
     let
         eps :: Double
         eps = read . head $ args
-    BS.writeFile "wiffle.stl" . runPut . put . polygonize eps $ difference box $ scale 1.2 sphere
+    BS.writeFile "wiffle.stl" . toLazyByteString . textSTL . polygonize eps $ difference box $ scale 1.2 sphere
