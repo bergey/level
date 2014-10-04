@@ -9,7 +9,6 @@ import Linear.Affine
 import Graphics.Formats.STL
 import Graphics.Formats.STL.Linear
 
-
 -- TODO generalize data types; keeping them simple to speed prototyping
 type Pt = Point V3 Double
 type Vec = V3 Double
@@ -73,7 +72,6 @@ tetrahedra step p = [ Tetra a b c e
                     ] where
   [a, b, c, d, e, f, g, h] = (p .+^) <$> (V3 <$> [0, step] <*> [0, step] <*> [0,step])
 
-
 -- | find a pair of vectors indicating the corners of the box
 axisAlignedBox :: (Vec -> V2 Double) -> Cube
 axisAlignedBox f  = mkCube . sum $ zipWith mul basis $ map f basis where
@@ -107,9 +105,8 @@ findSurface i@(Implicit f _) (Tetra a b c d) = case map ((>0) . f) [a,b,c,d] of
     [True ,True ,True ,False] -> [ tri (edge b d) (edge a d) (edge c d)]
     [True ,True ,True ,True ] -> []
     where
-     tri a b c = triangle n $ V3 a b c
+     tri a b c = triangle Nothing $ V3 a b c
      edge = findPoint 5 i
-     n = V3 0 0 0 -- null normal, acceptable in STL
 
 -- | @findPoint@ tries to find a zero of the implicit function on the
 -- line segment between the given points.  It performs a binary

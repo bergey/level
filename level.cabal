@@ -23,6 +23,6 @@ library
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.8,
                        linear >= 1.6 && < 1.7,
-                       STL >= 0.1 && < 0.2,
+                       STL >= 0.2 && < 0.3,
                        lens >= 4.0 && < 4.1
   default-language:    Haskell2010

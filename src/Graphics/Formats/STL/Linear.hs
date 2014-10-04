@@ -6,8 +6,8 @@ import Graphics.Formats.STL
 import Linear
 import Linear.Affine
 
-triangle :: Real a => V3 a -> V3 (Point V3 a) -> Triangle
-triangle n pts = Triangle (asVector n) . asTriple $ (asVector . view lensP <$> pts)
+triangle :: Real a => Maybe (V3 a) -> V3 (Point V3 a) -> Triangle
+triangle n pts = Triangle (asVector <$> n) . asTriple $ (asVector . view lensP <$> pts)
 
 asTriple :: V3 a -> (a,a,a)
 asTriple (V3 x y z) = (x,y,z)
