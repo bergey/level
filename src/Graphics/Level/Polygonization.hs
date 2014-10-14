@@ -21,7 +21,7 @@ type Vec = V3 Double
 -- space The surface is the set of points where this function is 0 (A
 -- level set).  The function is negative "inside" the solid, and
 -- positive "outside".
--- 
+--
 -- The second argument gives a bound on the size of the solid in the
 -- given direction.  This need not be a tight bound.  This allows
 -- combining bounds in a simple way, while stil providing reasonable
@@ -105,31 +105,32 @@ findSurface i@(Implicit f _) (Tetra a b c d) = case map ((>0) . f) [a,b,c,d] of
     [True ,True ,True ,False] -> [ tri (edge b d) (edge a d) (edge c d)]
     [True ,True ,True ,True ] -> []
     where
-     tri a b c = triangle Nothing $ V3 a b c
+     tri p q r = triangle Nothing $ V3 p q r
      edge = findPoint 5 i
 
 -- | @findPoint@ tries to find a zero of the implicit function on the
 -- line segment between the given points.  It performs a binary
--- search, and the first argument is the maximum number of divisions
--- to attempt.  It is an error to call this function on two points
+-- search, and the first argument is the number of divisions
+-- to perform.  It is an error to call this function on two points
 -- where the function has the same sign.
 findPoint :: Int -> Implicit -> Pt -> Pt -> Pt
-findPoint n (Implicit f _) p0 q0 = case compare (signum fp0) (signum fq0) of
+findPoint nMax (Implicit f _) p0 q0 = case compare (signum fp0) (signum fq0) of
     EQ -> error ("findPoint was called on "++show p0++" and "++show q0++" where the function has the same sign")
-    LT -> go n f (p0, fp0) (q0, fq0)
-    GT -> go n f (q0, fq0) (p0, fp0)
+    LT -> go nMax (p0, fp0) (q0, fq0)
+    GT -> go nMax (q0, fq0) (p0, fp0)
   where
     fp0 = f p0
     fq0 = f q0
     -- go requires fp < 0; fq > 0
-    go 0 f (p, fp) (q, fq) = case compare (abs fp) (abs fq) of
+    go 0 (p, fp) (q, fq) = case compare (abs fp) (abs fq) of
         LT -> p
         GT -> q
         EQ -> (p+q)/2
-    go n f (p, fp) (q, fq) = let mid = (p+q)/2
-                                 fmid = f mid
-                             in
-                              case compare fmid 0 of
-                                  LT -> go (n-1) f (mid,fmid) (q,fq)
-                                  GT -> go (n-1) f (p,fp) (mid,fmid)
-                                  EQ -> mid
+    go n (p, fp) (q, fq) = let
+        mid = (p+q)/2
+        fmid = f mid
+        in
+         case compare fmid 0 of
+          LT -> go (n-1) (mid,fmid) (q,fq)
+          GT -> go (n-1) (p,fp) (mid,fmid)
+          EQ -> mid
