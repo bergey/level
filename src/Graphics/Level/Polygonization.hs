@@ -37,8 +37,7 @@ mkCube :: V2 Vec -> Cube
 mkCube (V2 l u) = Cube (P l) (P u)
 
 -- | Any 4 points define a tetrahedron, provided they are not all coplanar.
-data Tetrahedron = Tetra Pt Pt Pt Pt
-                 deriving (Show)
+type Tetrahedron =  V4 Pt
 
 -- | @polygonize e s@ generates an explicit triangle mesh on the
 -- surface of s, using a grid of axis-aligned cubes of size e.
@@ -63,12 +62,12 @@ cells e (Implicit _ env) = concatMap (tetrahedra e) ps where
 -- | @tetrahedra e p@ gives 6 tetrahedra filling the cube between @p@
 -- and @p + pure e@
 tetrahedra :: Double -> Pt -> [Tetrahedron]
-tetrahedra step p = [ Tetra a b c e
-                    , Tetra b c e g
-                    , Tetra b e f g
-                    , Tetra b c d g
-                    , Tetra b d f g
-                    , Tetra d f g h
+tetrahedra step p = [V4 a b c e
+                    , V4 b c e g
+                    , V4 b e f g
+                    , V4 b c d g
+                    , V4 b d f g
+                    , V4 d f g h
                     ] where
   [a, b, c, d, e, f, g, h] = (p .+^) <$> (V3 <$> [0, step] <*> [0, step] <*> [0,step])
 
@@ -81,29 +80,29 @@ axisAlignedBox f  = mkCube . sum $ zipWith mul basis $ map f basis where
 -- This is approximated by 0, 1, or 2 triangles.  The latter are
 -- coplanar, but this information is not useful.
 findSurface :: Implicit -> Tetrahedron -> [Triangle]
-findSurface i@(Implicit f _) (Tetra a b c d) = case map ((>0) . f) [a,b,c,d] of
-    [False,False,False,False] -> []
-    [False,False,False,True ] -> [ tri (edge b d) (edge c d) (edge a d)]
-    [False,False,True ,False] -> [ tri (edge a c) (edge c d) (edge b c)]
-    [False,False,True ,True ] -> [ tri (edge a d) (edge b d) (edge b c)
+findSurface i@(Implicit f _) t@(V4 a b c d) = case (>0) . f <$> t of
+    V4 False False False False -> []
+    V4 False False False True  -> [ tri (edge b d) (edge c d) (edge a d)]
+    V4 False False True False -> [ tri (edge a c) (edge c d) (edge b c)]
+    V4 False False True True  -> [ tri (edge a d) (edge b d) (edge b c)
                                  , tri (edge b c) (edge a c) (edge a d)]
-    [False,True ,False,False] -> [ tri (edge a b) (edge b c) (edge b d)]
-    [False,True ,False,True ] -> [ tri (edge a d) (edge a b) (edge b c)
+    V4 False True False False -> [ tri (edge a b) (edge b c) (edge b d)]
+    V4 False True False True  -> [ tri (edge a d) (edge a b) (edge b c)
                                  , tri (edge b c) (edge c d) (edge a d)]
-    [False,True ,True ,False] -> [ tri (edge a b) (edge a c) (edge c d)
+    V4 False True True False -> [ tri (edge a b) (edge a c) (edge c d)
                                  , tri (edge c d) (edge b d) (edge a b)]
-    [False,True ,True ,True ] -> [ tri (edge a b) (edge a c) (edge a d)]
-    [True ,False,False,False] -> [ tri (edge a b) (edge a d) (edge a c)]
-    [True ,False,False,True ] -> [ tri (edge a b) (edge b d) (edge c d)
+    V4 False True True True  -> [ tri (edge a b) (edge a c) (edge a d)]
+    V4 True False False False -> [ tri (edge a b) (edge a d) (edge a c)]
+    V4 True False False True  -> [ tri (edge a b) (edge b d) (edge c d)
                                  , tri (edge c d) (edge a c) (edge a b)]
-    [True ,False,True ,False] -> [ tri (edge a b) (edge a d) (edge c d)
+    V4 True False True False -> [ tri (edge a b) (edge a d) (edge c d)
                                  , tri (edge c d) (edge b c) (edge a b)]
-    [True ,False,True ,True ] -> [ tri (edge a b) (edge b d) (edge b c)]
-    [True ,True ,False,False] -> [ tri (edge a d) (edge a c) (edge b c)
+    V4 True False True True  -> [ tri (edge a b) (edge b d) (edge b c)]
+    V4 True True False False -> [ tri (edge a d) (edge a c) (edge b c)
                                  , tri (edge b c) (edge b d) (edge a d)]
-    [True ,True ,False,True ] -> [ tri (edge c d) (edge a c) (edge b c)]
-    [True ,True ,True ,False] -> [ tri (edge b d) (edge a d) (edge c d)]
-    [True ,True ,True ,True ] -> []
+    V4 True True False True  -> [ tri (edge c d) (edge a c) (edge b c)]
+    V4 True True True False -> [ tri (edge b d) (edge a d) (edge c d)]
+    V4 True True True True  -> []
     where
      tri p q r = triangle Nothing $ V3 p q r
      edge = findPoint 5 i
