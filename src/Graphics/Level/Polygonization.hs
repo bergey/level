@@ -6,6 +6,7 @@ import Graphics.Level.Types
 
 import Graphics.Formats.STL
 import Graphics.Formats.STL.Linear
+import Numeric.Interval.Kaucher
 
 import Control.Applicative
 import Linear
@@ -20,7 +21,7 @@ polygonize e s = STL "" $ concatMap (findSurface s) (cells e s)
 -- bounding box of @imp@.
 cells :: Double -> Implicit -> [Tetrahedron]
 cells e (Implicit _ env) = concatMap (tetrahedra e) ps where
-  Cube l u = axisAlignedBox env
+  I l u = axisAlignedBox env
   V3 sx sy sz = u .-. l
   ps = (l .+^) <$> (V3 <$> [0,e..sx] <*> [0,e..sy] <*> [0,e..sz])
 
@@ -30,6 +31,10 @@ cells e (Implicit _ env) = concatMap (tetrahedra e) ps where
 -- results in Kuhn simplices, which can be subdivided into similar
 -- tetrahedra.  [Bloomenthal 1997] This could be useful for adaptive
 -- subdivision in the future.
+
+
+-- | Any 4 points define a tetrahedron, provided they are not all coplanar.
+type Tetrahedron =  V4 Pt
 
 -- | @tetrahedra e p@ gives 6 tetrahedra filling the cube between @p@
 -- and @p + pure e@
@@ -43,10 +48,18 @@ tetrahedra step p = [V4 a b c e
                     ] where
   [a, b, c, d, e, f, g, h] = (p .+^) <$> (V3 <$> [0, step] <*> [0, step] <*> [0,step])
 
+-- | An axis-aligned cube represented by two opposite corners
+type Cube = Interval Pt
+
+-- mkCube :: V2 Vec -> Cube
+-- mkCube (V2 l u) = Cube (P l) (P u)
+
 -- | find a pair of vectors indicating the corners of the box
-axisAlignedBox :: (Vec -> V2 Double) -> Cube
-axisAlignedBox f  = mkCube . sum $ zipWith mul basis $ map f basis where
-  mul v mags = (*^ v) <$> mags
+axisAlignedBox :: (Vec -> Interval Double) -> Cube
+axisAlignedBox f  = let
+    f' :: Vec -> Interval Vec
+    f' v = (*^) <$> f v <*> pure v
+    in fmap P . sum . map f'$ basis
 
 -- | A surface can intersect a 0, 3, or 4 edges of a tetrahedron.
 -- This is approximated by 0, 1, or 2 triangles.  The latter are

@@ -2,6 +2,7 @@ module Graphics.Level.Types where
 
 import Linear
 import Linear.Affine
+import Numeric.Interval.Kaucher
 
 -- TODO generalize data types; keeping them simple to speed prototyping
 type Pt = Point V3 Double
@@ -21,14 +22,4 @@ type Vec = V3 Double
 -- combining bounds in a simple way, while stil providing reasonable
 -- limits during polygonization or raytracing.  Bounding boxes (or
 -- spheres) could be used instead, provided they are not axis-aligned.
-data Implicit = Implicit (Pt -> Double) (Vec -> V2 Double)
-
--- | A cube represented by two opposite corners
-data Cube = Cube Pt Pt
-          deriving (Show)
-
-mkCube :: V2 Vec -> Cube
-mkCube (V2 l u) = Cube (P l) (P u)
-
--- | Any 4 points define a tetrahedron, provided they are not all coplanar.
-type Tetrahedron =  V4 Pt
+data Implicit = Implicit (Pt -> Double) (Vec -> Interval Double)
